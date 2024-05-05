@@ -1,3 +1,4 @@
+import AppFilter from '@/components/AppFilter'
 import { Button, Table } from '@radix-ui/themes'
 import Link from 'next/link'
 import React from 'react'
@@ -6,9 +7,12 @@ import Skeleton from 'react-loading-skeleton'
 const IssuesListLoading = () => {
     return (
         <div>
-            <Link href={'/issues/new'}>
-                <Button>Create Issue</Button>
-            </Link>
+            <div className="flex items-center gap-5">
+                <Link href={'/issues/new'}>
+                    <Button>Create Issue</Button>
+                </Link>
+                <AppFilter />
+            </div>
             <Table.Root className='mt-5' variant='surface'>
                 <Table.Header >
                     <Table.Row>

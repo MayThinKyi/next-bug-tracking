@@ -4,6 +4,9 @@ import Link from 'next/link'
 import React from 'react'
 import prisma from "../../../../prisma/db";
 import delay from 'delay'
+import { Status } from '@prisma/client';
+import AppPagination from '@/components/AppPagination';
+import AppFilter from '@/components/AppFilter';
 
 export async function generateMetadata() {
     return {
@@ -11,20 +14,50 @@ export async function generateMetadata() {
         description: 'Here is a List of Issues!'
     }
 }
-const IssueListPage = async () => {
+interface Props {
+    searchParams: {
+        status?: Status;
+        sort?: string;
+        page?: string;
+    }
+}
+const IssueListPage = async ({ searchParams }: Props) => {
+    const tableHeaders: { label: string; value: string }[] = [
+        { label: 'Title', value: 'title' },
+        { label: 'Status', value: 'status' },
+        { label: 'Created At', value: 'createdAt' },
+    ]
     await delay(2000);
-    const issues = await prisma?.issue.findMany();
+    const status = searchParams.status ? searchParams.status : undefined
+    const orderBy = searchParams.sort ? { [searchParams.sort]: 'asc' } : undefined
+    const issues = await prisma?.issue.findMany({
+        where: {
+            status
+        },
+        orderBy,
+        skip: (Number(searchParams.page || 1) - 1) * 5,
+        take: 5
+    });
+    const issuesCount = await prisma.issue.count({ where: { status } })
     return (
         <div>
-            <Link href={'/issues/new'}>
-                <Button>Create Issue</Button>
-            </Link>
+            <div className="flex items-center gap-5">
+                <Link href={'/issues/new'}>
+                    <Button>Create Issue</Button>
+                </Link>
+                <AppFilter />
+            </div>
             <Table.Root className='mt-5' variant='surface'>
                 <Table.Header >
                     <Table.Row>
-                        <Table.ColumnHeaderCell>Title</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Created At</Table.ColumnHeaderCell>
+                        {tableHeaders.map((header) => {
+                            return <Table.ColumnHeaderCell className='cursor-pointer' key={header.label}>
+                                <Link href={{ query: { ...searchParams, sort: header.value } }}>
+                                    {header.label}
+                                </Link>
+                            </Table.ColumnHeaderCell>
+                        })}
+
                     </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -44,6 +77,7 @@ const IssueListPage = async () => {
 
                 </Table.Body>
             </Table.Root>
+            <AppPagination currentPage={Number(searchParams.page) || 1} pageCount={Math.ceil(issuesCount / 5)} pageSize={5} />
         </div>
     )
 }

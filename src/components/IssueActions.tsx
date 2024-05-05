@@ -26,6 +26,7 @@ const IssueActions = ({ issue }: Props) => {
             toast.success('Issue deleted successfully!')
             console.log('data', data)
             router.push('/issues/list')
+            router.refresh();
 
         } catch (error) {
             console.log('error', error)
